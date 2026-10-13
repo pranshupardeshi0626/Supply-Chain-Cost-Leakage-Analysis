@@ -1,10 +1,12 @@
 """Smoke test: every page renders without an exception (uses Streamlit's AppTest)."""
+from pathlib import Path
+
 import pytest
 from streamlit.testing.v1 import AppTest
 
 from app import PAGES  # noqa: F401  (import also checks the module-level code runs)
 
-APP = str(__import__("pathlib").Path(__file__).resolve().parent.parent / "app.py")
+APP = str(Path(__file__).resolve().parent.parent / "app.py")
 
 
 @pytest.fixture(scope="module")

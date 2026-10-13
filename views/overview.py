@@ -3,49 +3,61 @@ import streamlit as st
 
 from src import charts, metrics as m
 from src.formatters import inr, pct
-from src.ui import banner, kpi_row, section
+from src.ui import hero, kpi_row, section, show, table
 
 
 def render(df):
-    banner("Supply Chain Cost Leakage Dashboard",
-           "Where a 100K-order FMCG supply chain loses money and service quality")
     k = m.headline_kpis(df)
+    span = f"{df['order_date'].min():%b %Y} to {df['order_date'].max():%b %Y}"
+    hero("Exploratory analysis of an FMCG supply chain",
+         f"{inr(k['sc_cost'])} of supply-chain cost on {inr(k['order_value'])} of orders, "
+         f"and only <span>{pct(k['otif'], 0)}</span> arrive on time and in full",
+         f"{k['orders']:,} purchase orders, {span}. The pages on the left walk through the data "
+         "step by step: profile it, look at each variable, then at the relationships that explain the leakage.",
+         [(f"{k['orders']:,}", "orders analysed"), (pct(k["cost_pct"], 2), "cost as % of order value"),
+          (pct(k["rejection_rate"]), "orders rejected"), (pct(k["overstock_rate"] + k["stockout_rate"], 0),
+                                                         "orders with a stock imbalance")])
 
-    section("Cost")
+    section("Cost", "What the supply chain spends")
     kpi_row([
-        ("Orders", f"{k['orders']:,}", None),
-        ("Order value", inr(k["order_value"]), "Total value of purchase orders"),
-        ("Supply-chain cost", inr(k["sc_cost"]), "Transport + holding cost"),
-        ("Cost % of order value", pct(k["cost_pct"], 2), "Supply-chain cost / order value"),
+        ("Orders", f"{k['orders']:,}", "purchase orders in selection", "teal"),
+        ("Order value", inr(k["order_value"]), "total value of purchase orders", "teal"),
+        ("Supply-chain cost", inr(k["sc_cost"]), "transport + holding", "coral"),
+        ("Cost % of order value", pct(k["cost_pct"], 2), "supply-chain cost / order value", "coral"),
     ])
 
-    section("Service & inventory")
+    section("Service and inventory", "How well orders are delivered and stocked")
     kpi_row([
-        ("OTIF", pct(k["otif"]), "Orders delivered On Time AND In Full"),
-        ("On-time", pct(k["on_time"]), None),
-        ("Stockout rate", pct(k["stockout_rate"]), "Orders where stock fell below the reorder point"),
-        ("Overstock rate", pct(k["overstock_rate"]), "Orders where stock is far above the reorder point"),
-        ("Rejection rate", pct(k["rejection_rate"]), None),
+        ("OTIF", pct(k["otif"]), "on time AND in full", "green" if k["otif"] >= 0.9 else "amber"),
+        ("Stockout rate", pct(k["stockout_rate"]), "stock below reorder point", "amber"),
+        ("Overstock rate", pct(k["overstock_rate"]), "stock far above reorder point", "amber"),
+        ("Rejection rate", pct(k["rejection_rate"]), "orders rejected on receipt", "coral"),
     ])
 
-    left, right = st.columns(2)
-    left.plotly_chart(charts.otif_breakdown(k), use_container_width=True)
-    right.plotly_chart(charts.cost_split(k), use_container_width=True)
-
-    section("Trend over time")
+    section("Trend and delivery mix")
     trend = m.monthly_trend(df)
-    left, right = st.columns(2)
-    left.plotly_chart(charts.line_trend(trend, "otif", "Monthly OTIF", "OTIF"), use_container_width=True)
-    right.plotly_chart(charts.line_trend(trend, "cost_pct", "Monthly cost % of order value",
-                                         "Cost %"), use_container_width=True)
+    left, right = st.columns([2, 1])
+    with left:
+        show(charts.line_trend(trend, "otif", "Monthly OTIF", "OTIF"))
+    with right:
+        show(charts.delivery_breakdown(k))
 
-    section("By product category")
+    left, right = st.columns([2, 1])
+    with left:
+        show(charts.line_trend(trend, "cost_pct", "Monthly cost as % of order value", "Cost %", color="#E4572E"))
+    with right:
+        show(charts.cost_split(k))
+
+    section("By product category", "Sorted by cost as % of order value")
     cat = m.kpis_by(df, "product_category").sort_values("cost_pct", ascending=False)
-    table = cat[["product_category", "orders", "otif", "cost_pct", "stockout_rate",
-                 "overstock_rate", "rejection_rate"]].copy()
-    for col in ["otif", "cost_pct", "stockout_rate", "overstock_rate", "rejection_rate"]:
-        table[col] = (table[col] * 100).round(2)
-    st.dataframe(table.rename(columns={
-        "product_category": "Category", "orders": "Orders", "otif": "OTIF %", "cost_pct": "Cost % of value",
-        "stockout_rate": "Stockout %", "overstock_rate": "Overstock %", "rejection_rate": "Rejection %"}),
-        hide_index=True, use_container_width=True)
+    view = cat[["product_category", "orders", "otif", "cost_pct", "stockout_rate", "overstock_rate",
+                "rejection_rate"]]
+    table(view, column_config={
+        "product_category": "Category",
+        "orders": st.column_config.NumberColumn("Orders", format="%d"),
+        "otif": st.column_config.ProgressColumn("OTIF", format="percent", min_value=0, max_value=1),
+        "cost_pct": st.column_config.NumberColumn("Cost % of value", format="percent"),
+        "stockout_rate": st.column_config.NumberColumn("Stockout", format="percent"),
+        "overstock_rate": st.column_config.NumberColumn("Overstock", format="percent"),
+        "rejection_rate": st.column_config.NumberColumn("Rejection", format="percent"),
+    })

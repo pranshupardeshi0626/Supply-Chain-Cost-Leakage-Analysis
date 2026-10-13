@@ -1,9 +1,19 @@
 [theme]
 base = "light"
-primaryColor = "#2e86de"
-backgroundColor = "#f4f6f9"
-secondaryBackgroundColor = "#ffffff"
-textColor = "#1a1a2e"
+primaryColor = "#0B7285"
+backgroundColor = "#F1F5F9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#14283A"
+font = "sans serif"
+
+[theme.sidebar]
+backgroundColor = "#0F2437"
+secondaryBackgroundColor = "#1A3550"
+textColor = "#DCE7F0"
+primaryColor = "#3CC4C4"
 
 [server]
 headless = true
+
+[browser]
+gatherUsageStats = false

@@ -25,31 +25,31 @@ All numbers are computed live by `src/insights.py` and verified by a regression 
 
 | Page | What it shows |
 |---|---|
-| Overview | Cost and service KPIs, OTIF breakdown, cost split, monthly trends, category table |
+| Overview | Headline numbers, cost and service KPIs, monthly trends, cost split, category table |
+| Data Profile | Column types, missing values, summary statistics, outliers, raw rows (step 1 of the EDA) |
+| Univariate | Distribution, mean/median/skew and outliers of any numeric column; counts for any category (step 2) |
+| Bivariate & Multivariate | Scatter with trend line, group box plots, correlation matrix, pivot heatmap (step 3) |
+| Cost Drivers | Transport mode, category and season, overstock vs stockout, rejection Pareto, region x category heatmap, cost correlations |
+| Suppliers | OTIF / delay / rejection per supplier, adjustable at-risk threshold, CSV download |
 | Key Findings | The 8 findings above, the three "leakage" estimates in rupees, an Air-to-Road what-if slider |
-| Supplier Scorecard | OTIF / delay / rejection per supplier, adjustable at-risk threshold, CSV download |
-| Cost Drivers | Transport mode, overstock vs stockout, rejection Pareto, region x category heatmap, cost correlations |
-| Data Explorer | Free-form univariate, bivariate and multivariate EDA |
-| SQL Lab | 7 business queries (window functions, CTEs) on in-memory SQLite, plus a safe custom query box |
 
 ## Project structure
 
 ```
 app.py              entry point: page config, data loading, sidebar, routing
+.streamlit/         theme (light page, dark sidebar)
 src/
-  config.py         constants and thresholds
+  config.py         constants, thresholds, colour palette
   data_loader.py    load -> validate schema -> clean
   metrics.py        KPI and leakage calculations (pure functions)
+  profiling.py      EDA helpers: schema, missing values, outliers, correlations
   insights.py       turns metrics into findings, evidence and caveats
   filters.py        sidebar filters
   charts.py         Plotly figure builders
-  sql_layer.py      SQLite helper + read-only guard
-  formatters.py     rupee / percent formatting
-  ui.py, styles.py  reusable components and CSS
+  formatters.py     rupee / percent / compact-number formatting
+  theme.py, ui.py   CSS, Plotly template and reusable components
 views/              one small file per page
-sql/queries.sql     the SQL Lab queries
-tests/              27 tests (hand-checked KPIs, SQL guard, every page renders)
-INTERVIEW_GUIDE.md  how to explain this project
+tests/              hand-checked KPIs, profiling helpers, every page renders
 ```
 
 ## Run it

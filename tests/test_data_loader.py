@@ -27,7 +27,7 @@ def test_clean_drops_unparseable_dates(small_df):
 
 
 def test_real_dataset_matches_known_numbers():
-    """Golden test: these are the numbers quoted in the README and interview guide."""
+    """Golden test: these are the numbers quoted in the README."""
     df = load_default()
     assert len(df) == 100_000 and set(REQUIRED_COLUMNS) <= set(df.columns)
     assert df["order_id"].is_unique
