@@ -1,7 +1,7 @@
 """Load -> validate -> clean. No Streamlit here, so it is easy to unit-test."""
 import pandas as pd
 
-from src.config import DATA_PATH, REQUIRED_COLUMNS
+from src.config import DATA_PATH, NOT_REJECTED, REQUIRED_COLUMNS
 
 
 def validate_schema(df: pd.DataFrame) -> list:
@@ -17,7 +17,7 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop_duplicates(subset="order_id")
 
     # rejection_reason is blank for accepted orders: that is expected, not missing data
-    df["rejection_reason"] = df["rejection_reason"].fillna("Not rejected")
+    df["rejection_reason"] = df["rejection_reason"].fillna(NOT_REJECTED)
 
     df["year"] = df["order_date"].dt.year
     df["year_month"] = df["order_date"].dt.to_period("M").dt.to_timestamp()

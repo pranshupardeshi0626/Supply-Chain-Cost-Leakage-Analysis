@@ -22,14 +22,14 @@ def apply_filters(df, date_range, selections: dict) -> pd.DataFrame:
 
 
 def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
-    st.sidebar.markdown("### Filters")
+    st.markdown('<div class="side-label">Filters</div>', unsafe_allow_html=True)
     min_d, max_d = df["order_date"].min().date(), df["order_date"].max().date()
-    date_range = st.sidebar.date_input("Order date", (min_d, max_d), min_value=min_d, max_value=max_d)
+    date_range = st.date_input("Order date", (min_d, max_d), min_value=min_d, max_value=max_d)
 
     selections = {}
     for label, col in FILTER_COLUMNS.items():
         options = sorted(df[col].dropna().unique())
-        selections[col] = st.sidebar.multiselect(label, options, default=options)
+        selections[col] = st.multiselect(label, options, default=options)
 
     # while the user is mid-selection of a date range, date_input returns 1 date: ignore it
     return apply_filters(df, date_range if len(date_range) == 2 else None, selections)
